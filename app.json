@@ -30,7 +30,8 @@
       "output": "static",
       "favicon": "./assets/images/favicon.png",
       "bundler": "metro",
-      "display": "standalone"
+      "display": "standalone",
+      "publicPath": "/UCSB-Calorie-Tracker/"
     },
     "plugins": [
       "expo-router",
