@@ -1,98 +1,242 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { useMeal } from '@/context/MealContext';
+import { Week } from '@/data/menu';
+import { useRouter } from 'expo-router';
+import 'expo-router/entry';
+import { useEffect } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const router = useRouter();
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  const { clear, setHall, selectedHall, DayMenu, setDayMenu, selectedMealType, setMealType, fetchDate, setDecimal } = useMeal();
+  
+  //const [showStartPrompt, setShowStartPrompt] = useState(false);
+
+  //const [hallOpen, setHallOpen] = useState(false);
+  //const [mealOpen, setMealOpen] = useState(false);
+
+  const mealTypes: string[] = ["Breakfast", "Brunch", "Lunch", "Dinner"];
+
+  //const [mealItems, setMealItems] = useState(
+    //mealTypes.map(m => ({ label: m, value: m }))
+  //);
+
+  //const [halls, setHalls] = useState(
+    //diningHalls.map(hall => ({ label: hall.name, value: hall.id }))
+  //);
+
+  function handleChange(newHall: number, newMealtype: string) {
+    const dayindex = Week.findIndex(d => d.date === fetchDate());
+    if (dayindex === -1 || Week[dayindex].halls.length <= newHall) { setDayMenu(null); return; } 
+    setDayMenu((Week[dayindex].halls[newHall].meals.findIndex(d => d.name === newMealtype) != -1 ? true : null));
+  }
+
+  useEffect(() => {
+    if (selectedHall !== null && selectedMealType != null) {
+      handleChange(selectedHall, selectedMealType);
+    }
+  }, [selectedHall, selectedMealType]);
+ 
+  return (
+    <>
+      {/* <Modal visible={showStartPrompt} transparent animationType="fade">
+        <View style={styles.overlay}>
+          <View style={styles.prompt}>
+            <Text style={styles.title}>Select Dining Hall and Meal Type:</Text>
+            <View style={{zIndex: 100, margin: 10}}>
+              <DropDownPicker
+                open={hallOpen}
+                value={selectedHall}
+                items={halls}
+                setOpen={setHallOpen}
+                setValue={setHall}
+                setItems={setHalls}
+                placeholder="Select Meal Type"
+              />
+            </View>
+            <View style={{zIndex: 99, margin: 10}}>
+              <DropDownPicker
+                open={mealOpen}
+                value={selectedMealType}
+                items={mealItems}
+                setOpen={setMealOpen}
+                setValue={setMealType}
+                setItems={setMealItems}
+                placeholder="Select Meal Type"
+              />
+            </View>
+
+            {DayMenu != null && (
+              <View>
+                <Text>Use Day Menu?</Text>
+                <Pressable onPress={() => setDayMenu(!DayMenu)}>
+                  <View style={{width: 30, height: 30, alignSelf: 'center', margin: 10, backgroundColor: (DayMenu ? "black" : "white")}}></View>
+                </Pressable>
+              </View>
+            )}
+
+            <View style={styles.boxes}>
+              <Pressable
+                onPress={() => {
+                  setShowStartPrompt(false);
+                  clear();
+                  setDecimal(false);
+                  router.push('../create-meal');
+                }}
+              >
+                <View style={styles.saveBox}>
+                  <Text style={styles.save}>Start</Text>
+                </View>
+              </Pressable>
+              <Pressable onPress={() => setShowStartPrompt(false)}>
+                <View style={styles.cancelBox}>
+                  <Text style={styles.cancel}>Cancel</Text>
+                </View>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal> */}
+
+      <View style={{backgroundColor: '#FF7777',paddingTop: 50}}>
+        <Text style={styles.headtitle}>Create Meal</Text>
+      </View>
+      <View style={styles.overlay}>
+        <Text style={styles.instruct}>Select a Dining Hall:</Text>
+        <View style={{flexDirection:'row'}}>
+          <Pressable style={[styles.button, {backgroundColor:(selectedHall === 0 ? "#B2B2B7" : "#F2F2F7")}]} onPress={() => setHall(0)}>
+            <Text>De La Guerra</Text>
+          </Pressable>
+          <Pressable style={[styles.button, {backgroundColor:(selectedHall === 1 ? "#B2B2B7" : "#F2F2F7")}]} onPress={() => setHall(1)}>
+            <Text>Portola</Text>
+          </Pressable>
+          <Pressable style={[styles.button, {backgroundColor:(selectedHall === 2 ? "#B2B2B7" : "#F2F2F7")}]} onPress={() => setHall(2)}>
+            <Text>Carrillo</Text>
+          </Pressable>
+        </View>
+        <Text style={styles.instruct}>Select a Meal Type:</Text>
+        <View style={{flexDirection:'row'}}>
+          <Pressable style={[styles.button, {backgroundColor:(selectedMealType === "Breakfast" ? "#B2B2B7" : "#F2F2F7")}]} onPress={() => setMealType("Breakfast")}>
+            <Text>Breakfast</Text>
+          </Pressable>
+          <Pressable style={[styles.button, {backgroundColor:(selectedMealType === "Brunch" ? "#B2B2B7" : "#F2F2F7")}]} onPress={() => setMealType("Brunch")}>
+            <Text>Brunch</Text>
+          </Pressable>
+          <Pressable style={[styles.button, {backgroundColor:(selectedMealType === "Lunch" ? "#B2B2B7" : "#F2F2F7")}]} onPress={() => setMealType("Lunch")}>
+            <Text>Lunch</Text>
+          </Pressable>
+          <Pressable style={[styles.button, {backgroundColor:(selectedMealType === "Dinner" ? "#B2B2B7" : "#F2F2F7")}]} onPress={() => setMealType("Dinner")}>
+            <Text>Dinner</Text>
+          </Pressable>
+        </View>
+        {/* <Pressable
+          onPress={() => {
+            setShowStartPrompt(true);
+          }}
+          style={{
+            backgroundColor: '#007AFF',
+            paddingVertical: 14,
+            paddingHorizontal: 24,
+            borderRadius: 10,
+          }}
+        >
+          <Text style={{ color: 'white', fontSize: 18 }}>
+            + Create Meal
+          </Text>
+        </Pressable> */}
+      </View>
+      {DayMenu != null && (
+        <View style={{position:'absolute',alignSelf:'center',bottom:200}}>
+          <Text style={styles.instruct}>Use Day Menu?</Text>
+          <Pressable onPress={() => setDayMenu(!DayMenu)}>
+            <View style={{width: 30, height: 30, alignSelf: 'center', margin: 10, backgroundColor: (DayMenu ? "#B2B2B7" : "#F2F2F7")}}></View>
+          </Pressable>
+        </View>
+      )}
+      <Pressable
+        onPress={() => {
+          clear();
+          setDecimal(false);
+          router.push('../create-meal');
+        }}
+        //style={{alignSelf:'center'}}
+      >
+        <View style={styles.startBox}>
+          <Text style={styles.start}>Start Meal</Text>
+        </View>
+      </Pressable>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  overlay: {
+    flex: 1,                 // ← fill the whole screen
+    justifyContent: "center",// ← vertical center
+    alignItems: "center",    // ← horizontal center
+    paddingBottom:100,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  prompt: {
+    backgroundColor: '#C2C2C7',
+    padding: 20,
+    alignSelf: 'center',
+    alignItems:'center',
+    borderRadius: 20,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
+  title: {
+    fontSize: 24,
+  },
+  headtitle: {
+    fontSize: 30,
+    fontWeight: 'bold',
+    marginBottom: 16,
+    color:'white',
+    textAlign:'center',
+    marginTop:20,
+  },
+  instruct: {
+    color:'white',
+    fontSize:24,
+    fontWeight:'500',
+  },
+  button: {
+    //position: 'absolute',
+    backgroundColor: '#F2F2F7',
+    padding: 10,
+    borderRadius: 10,
+    marginHorizontal: 5,
+    marginVertical: 10,
+  },
+  startBox: {
     position: 'absolute',
+    bottom: 100,
+    alignSelf:'center',
+    backgroundColor: '#F2F2F7',
+    paddingVertical: 7,
+    paddingHorizontal: 15,
+    borderRadius: 10,
+  },
+  start: {
+    fontSize: 24,
+    color: "green",
+  },
+
+  cancelBox: {
+    backgroundColor: '#B9B9BF',
+    padding: 7,
+    borderRadius: 10,
+  },
+
+  boxes: { 
+    flexDirection: "row",          // ← lays these 3 out left→right
+    width: '60%',
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
+  cancel: {
+    fontSize: 16,
+    color: "red",
   },
 });
